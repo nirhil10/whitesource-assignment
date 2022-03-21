@@ -1,0 +1,110 @@
+#!/bin/sh
+
+CONFIG_TMPDIR=""
+cleanup() {
+	rm -rf "${CONFIG_TMPDIR}"
+}
+trap cleanup 0
+
+RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+COMMAND=""
+REPO=""
+OUTPUR=""
+
+die() {
+	local m="$1"
+
+	echo "FATAL: ${m}" >&2
+	cat << __EOF__
+
+	For usage run: $0 --help
+
+__EOF__
+	exit 1
+}
+
+usage() {
+	cat << __EOF__
+
+This tool is used to get some stats from Github for specific repo
+This tool present the result as a table and write the output for a given
+file or just print it
+
+Usage:
+  githubCLI [command]
+
+Available Commands:
+  downloads Present the entire downloads for each asset
+  stats Present the stats of the repo (stars, forks, language, contributors)
+
+Flags:
+  -h, --help Print information about each command
+  -o, --output string The output path of the txt file
+  -r, --repo string The repository to analyze
+
+__EOF__
+}
+
+create_config_file()
+{
+	cat << __EOF__
+whitesource:
+  github:
+    cli:
+      command: "${COMMAND}"
+      repo: "${REPO}"
+      outputPath: "${OUTPUT}"
+__EOF__
+}
+
+github_get_information()
+{
+create_config_file > ${CONFIG_TMPDIR}/githubCli.yaml
+
+"java" \
+		-jar "${RUN_DIR}/whitesource-github-cli-0.0.1-SNAPSHOT.jar" \
+		--spring.config.location=${CONFIG_TMPDIR}/githubCli.yaml || die "Failed to run githubCLI!"
+}
+
+while [ -n "$1" ]; do
+	x="$1"
+	case "${x}" in
+		--help)
+			usage
+			exit 0
+		;;
+		-h)
+			usage
+			exit 0
+		;;
+		downloads)
+			COMMAND=downloads
+		;;
+		stats)
+			COMMAND=stats
+		;;
+		--repo)
+			REPO="$2"
+		;;
+		-r)
+			REPO="$2"
+		;;
+		--output)
+			OUTPUT="$2"
+		;;
+		-o)
+			OUTPUT="$2"
+		;;
+		--*)
+			die "Unknown parameter '${x}'"
+		;;
+		-*)
+			die "Unknown parameter '${x}'"
+		;;
+	esac
+	shift
+done
+
+CONFIG_TMPDIR="$(mktemp -d)"
+github_get_information

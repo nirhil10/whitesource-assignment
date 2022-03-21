@@ -1,0 +1,7 @@
+whitesource:
+  github:
+    cli:
+      command: stats
+      repo: whitesource/log4j-detect-distribution
+      outputPath: ${user.dir}/target/tables/stats1.txt
+      testContext: true
