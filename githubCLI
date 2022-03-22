@@ -1,21 +1,16 @@
 #!/bin/sh
 
-CONFIG_TMPDIR=""
-cleanup() {
-	rm -rf "${CONFIG_TMPDIR}"
-}
-trap cleanup 0
-
 RUN_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_TMPDIR="$(mktemp -d)"
 
 COMMAND=""
 REPO=""
-OUTPUR=""
+OUTPUT=""
 
 die() {
-	local m="$1"
+	_die_m="$1"
 
-	echo "FATAL: ${m}" >&2
+	echo "FATAL: ${_die_m}" >&2
 	cat << __EOF__
 
 	For usage run: $0 --help
@@ -60,11 +55,11 @@ __EOF__
 
 github_get_information()
 {
-create_config_file > ${CONFIG_TMPDIR}/githubCli.yaml
+create_config_file > "${CONFIG_TMPDIR}"/githubCli.yaml
 
 "java" \
 		-jar "${RUN_DIR}/whitesource-github-cli-0.0.1-SNAPSHOT.jar" \
-		--spring.config.location=${CONFIG_TMPDIR}/githubCli.yaml || die "Failed to run githubCLI!"
+		--spring.config.location="${CONFIG_TMPDIR}"/githubCli.yaml || die "Failed to run githubCLI!"
 }
 
 while [ -n "$1" ]; do
@@ -106,5 +101,4 @@ while [ -n "$1" ]; do
 	shift
 done
 
-CONFIG_TMPDIR="$(mktemp -d)"
 github_get_information
